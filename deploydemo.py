@@ -10,7 +10,6 @@ API_BASE = "https://waste-prediction-api-production.up.railway.app"
 LOGIN_URL = f"{API_BASE}/token"
 REGISTER_URL = f"{API_BASE}/register"
 PREDICT_URL = f"{API_BASE}/predict_all"
-HISTORY_URL = f"{API_BASE}/user_history"
 
 for key, default in {
     "token": None, "user": None, "image": None,
@@ -141,49 +140,47 @@ with tab2:
                 st.rerun()
 
 
-def load_user_history():
+with st.sidebar:
+    st.header("User History")
 
-    if not st.session_state.token:
-        st.error("Please log in first!")
-        return None
-    try:
-        headers = {"Authorization": f"Bearer {st.session_state.token}"}
-        response = requests.post(HISTORY_URL, headers=headers, verify=False)
-        response.raise_for_status()
-        return response.json().get("history_list", [])
-    except Exception as e:
-        st.error(f"Error when retrieving history: {e}")
-        return None
+    HISTORY_URL = f"{API_BASE}/user_history"
 
+    def load_user_history():
+        if not st.session_state.token:
+            st.error("Please log in first!")
+            return None
+        try:
+            headers = {"Authorization": f"Bearer {st.session_state.token}"}
+            response = requests.post(HISTORY_URL, headers=headers, verify=False)
+            response.raise_for_status()
+            return response.json().get("history_list", [])
+        except Exception as e:
+            st.error(f"Error when retrieving history: {e}")
+            return None
 
-
-st.subheader("Your waste prediction history")
-
-if st.session_state.token:
-    if st.button("Load history"):
-        history = load_user_history()
-        if history:
-            for entry in history:
-                with st.container(border=True):
+    if st.session_state.token:
+        if st.button("Load history", key="load_history_button"):
+            history = load_user_history()
+            if history:
+                for entry in history:
+                    st.markdown("----")
                     st.write(f"**Prediction:** {entry['trash_prediction'].title()}")
                     st.write(f"**Date:** {entry['created_at']}")
 
-                    if entry["photo_link"] and entry["photo_link"] != "upload failed":
+                    img_url = entry.get("photo_link")
+                    if img_url and img_url != "upload failed":
                         try:
-                            img_data = requests.get(entry["photo_link"], verify=False).content
-                            img = Image.open(io.BytesIO(img_data))
-                            st.image(img, width=350)
+                            img_bytes = requests.get(img_url, verify=False).content
+                            img = Image.open(io.BytesIO(img_bytes))
+                            st.image(img, width=200)
                         except:
                             st.warning("Could not load image.")
                     else:
-                        st.warning("Image was not saved.")
-        else:
-            st.info("No history entries yet.")
-else:
-    st.info("Log in to see your history.")
-
-
-
+                        st.warning("Image missing.")
+            else:
+                st.info("No history yet.")
+    else:
+        st.info("Log in to see history.")
 
 st.title("Waste Prediction App")
 
