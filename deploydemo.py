@@ -3,6 +3,7 @@ import requests
 from PIL import Image
 import urllib3
 import io
+import json
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -158,7 +159,9 @@ with hist_col:
             if len(history) == 0:
                 st.info("No history yet.")
             else:
-                for item in history:
+                for raw_item in history:
+                    item = json.loads(raw_item)  # ← parsowanie JSON STRINGU
+
                     with st.container(border=True):
                         st.write(f"**Prediction:** {item['trash_prediction']}")
                         st.write(f"**Date:** {item['created_at']}")
@@ -169,7 +172,6 @@ with hist_col:
 
         except Exception as e:
             st.error(f"Could not load history: {e}")
-
 
 with main_col:
 
