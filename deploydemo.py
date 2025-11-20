@@ -10,6 +10,7 @@ API_BASE = "https://waste-prediction-api-production.up.railway.app"
 LOGIN_URL = f"{API_BASE}/token"
 REGISTER_URL = f"{API_BASE}/register"
 PREDICT_URL = f"{API_BASE}/predict_all"
+HISTORY_URL = f"{API_BASE}/user_history"
 
 for key, default in {
     "token": None, "user": None, "image": None,
@@ -138,6 +139,50 @@ with tab2:
             except Exception as e:
                 st.session_state.register_message = f"Error: {e}"
                 st.rerun()
+
+
+def load_user_history():
+
+    if not st.session_state.token:
+        st.error("Please log in first!")
+        return None
+    try:
+        headers = {"Authorization": f"Bearer {st.session_state.token}"}
+        response = requests.post(HISTORY_URL, headers=headers, verify=False)
+        response.raise_for_status()
+        return response.json().get("history_list", [])
+    except Exception as e:
+        st.error(f"Error when retrieving history: {e}")
+        return None
+
+
+
+st.subheader("Your waste prediction history")
+
+if st.session_state.token:
+    if st.button("Load history"):
+        history = load_user_history()
+        if history:
+            for entry in history:
+                with st.container(border=True):
+                    st.write(f"**Prediction:** {entry['trash_prediction'].title()}")
+                    st.write(f"**Date:** {entry['created_at']}")
+
+                    if entry["photo_link"] and entry["photo_link"] != "upload failed":
+                        try:
+                            img_data = requests.get(entry["photo_link"], verify=False).content
+                            img = Image.open(io.BytesIO(img_data))
+                            st.image(img, width=350)
+                        except:
+                            st.warning("Could not load image.")
+                    else:
+                        st.warning("Image was not saved.")
+        else:
+            st.info("No history entries yet.")
+else:
+    st.info("Log in to see your history.")
+
+
 
 
 st.title("Waste Prediction App")
