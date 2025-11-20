@@ -89,6 +89,7 @@ with tab2:
     reg_password = st.text_input("New password", type="password", key="reg_password")
 
 
+
     if st.session_state.register_message:
         if "created" in st.session_state.register_message.lower():
             st.success(st.session_state.register_message)
