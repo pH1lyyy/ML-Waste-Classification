@@ -18,6 +18,7 @@ for key, default in {
     "image": None,
     "clear_inputs": False,
     "login_message": "",
+    "register_message": "",
 }.items():
     if key not in st.session_state:
         st.session_state[key] = default
@@ -48,6 +49,7 @@ with tab1:
     st.header("Login")
     username = st.text_input("Username", key="username")
     password = st.text_input("Password", type="password", key="password")
+
 
     if st.session_state.login_message:
         if "successful" in st.session_state.login_message.lower():
@@ -86,9 +88,17 @@ with tab2:
     reg_username = st.text_input("New username", key="reg_username")
     reg_password = st.text_input("New password", type="password", key="reg_password")
 
+
+    if st.session_state.register_message:
+        if "success" in st.session_state.register_message.lower():
+            st.success(st.session_state.register_message)
+        else:
+            st.error(st.session_state.register_message)
+
     if st.button("Create Account"):
         if not reg_username or not reg_password:
-            st.error("Enter username and password!")
+            st.session_state.register_message = "Enter username and password!"
+            st.rerun()
         else:
             try:
                 response = requests.post(
@@ -97,16 +107,16 @@ with tab2:
                     verify=False
                 )
                 if response.status_code == 200:
-                    st.success("Account created! You can now log in.")
+                    st.session_state.register_message = "Account created! You can now log in."
                     st.session_state.clear_register_inputs = True
                     st.rerun()
                 else:
                     detail = response.json().get("detail", "Registration failed")
-                    st.error(detail)
+                    st.session_state.register_message = detail
                     st.rerun()
             except Exception as e:
-                st.error(f"Error: {e}")
-
+                st.session_state.register_message = f"Error: {e}"
+                st.rerun()
 
 
 st.title("Waste Prediction App")
