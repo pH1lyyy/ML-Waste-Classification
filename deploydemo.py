@@ -17,6 +17,14 @@ if "user" not in st.session_state:
     st.session_state.user = None
 if "image" not in st.session_state:
     st.session_state.image = None
+if "clear_inputs" not in st.session_state:
+    st.session_state.clear_inputs = False
+
+
+if st.session_state.clear_inputs:
+    st.session_state.username = ""
+    st.session_state.password = ""
+    st.session_state.clear_inputs = False
 
 
 col1, col2 = st.columns([6, 1])
@@ -28,16 +36,14 @@ with col2:
         if st.button("Logout"):
             st.session_state.token = None
             st.session_state.user = None
-            st.session_state.username_input = ""   # clear inputs
-            st.session_state.password_input = ""
-            st.success("Logged out!")
+            st.session_state.clear_inputs = True
             st.rerun()
 
 
 st.sidebar.header("Login")
 
-username = st.sidebar.text_input("Username", key="username_input")
-password = st.sidebar.text_input("Password", type="password", key="password_input")
+username = st.sidebar.text_input("Username", key="username")
+password = st.sidebar.text_input("Password", type="password", key="password")
 
 if st.sidebar.button("Login"):
     if not username or not password:
@@ -54,10 +60,7 @@ if st.sidebar.button("Login"):
             st.session_state.token = response.json()["access_token"]
             st.session_state.user = username
 
-            # CLEAR INPUTS
-            st.session_state.username_input = ""
-            st.session_state.password_input = ""
-
+            st.session_state.clear_inputs = True  # mark for clearing
             st.sidebar.success("Login successful!")
             st.rerun()
 
