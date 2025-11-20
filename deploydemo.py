@@ -10,13 +10,23 @@ API_BASE = "https://waste-prediction-api-production.up.railway.app"
 LOGIN_URL = f"{API_BASE}/token"
 PREDICT_URL = f"{API_BASE}/predict_all"
 
-
+# --- SESSION VARIABLES ---
 if "token" not in st.session_state:
     st.session_state.token = None
 if "user" not in st.session_state:
     st.session_state.user = None
 if "image" not in st.session_state:
     st.session_state.image = None
+if "clear_inputs" not in st.session_state:
+    st.session_state.clear_inputs = False
+if "login_message" not in st.session_state:
+    st.session_state.login_message = None
+
+
+if st.session_state.clear_inputs:
+    st.session_state.username = ""
+    st.session_state.password = ""
+    st.session_state.clear_inputs = False
 
 
 col1, col2 = st.columns([6, 1])
@@ -24,35 +34,52 @@ col1, col2 = st.columns([6, 1])
 with col2:
     if st.session_state.token:
         st.write(f"Logged as: {st.session_state.user}")
+
         if st.button("Logout"):
             st.session_state.token = None
             st.session_state.user = None
-            st.success("Logged out!")
+            st.session_state.clear_inputs = True
+            st.session_state.login_message = None   # reset komunikatu
             st.rerun()
 
+
 st.sidebar.header("Login")
-username = st.sidebar.text_input("Username")
-password = st.sidebar.text_input("Password", type="password")
+
+username = st.sidebar.text_input("Username", key="username")
+password = st.sidebar.text_input("Password", type="password", key="password")
+
+
+if st.session_state.login_message:
+    if "successful" in st.session_state.login_message.lower():
+        st.sidebar.success(st.session_state.login_message)
+    else:
+        st.sidebar.error(st.session_state.login_message)
+
 
 if st.sidebar.button("Login"):
     if not username or not password:
-        st.sidebar.error("Enter username and password!")
-    else:
-        try:
-            response = requests.post(
-                LOGIN_URL,
-                data={"username": username, "password": password},
-                verify=False,
-            )
-            response.raise_for_status()
+        st.session_state.login_message = "Enter username and password!"
+        st.rerun()
 
-            st.session_state.token = response.json()["access_token"]
-            st.session_state.user = username
+    try:
+        response = requests.post(
+            LOGIN_URL,
+            data={"username": username, "password": password},
+            verify=False,
+        )
+        response.raise_for_status()
 
-            st.sidebar.success("Login successful!")
-            st.rerun()
-        except Exception as e:
-            st.sidebar.error(f"Login error: {e}")
+        st.session_state.token = response.json()["access_token"]
+        st.session_state.user = username
+
+        st.session_state.clear_inputs = True
+        st.session_state.login_message = "Login successful!"
+
+        st.rerun()
+
+    except Exception:
+        st.session_state.login_message = "Login error — wrong credentials?"
+        st.rerun()
 
 
 st.title("Waste Prediction - Demo")
