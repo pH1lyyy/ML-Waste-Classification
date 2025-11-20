@@ -140,96 +140,85 @@ with tab2:
                 st.rerun()
 
 
-with st.sidebar:
-    st.header("User History")
-
-    HISTORY_URL = f"{API_BASE}/user_history"
-
-    def load_user_history():
-        if not st.session_state.token:
-            st.error("Please log in first!")
-            return None
-        try:
-            headers = {"Authorization": f"Bearer {st.session_state.token}"}
-            response = requests.post(HISTORY_URL, headers=headers, verify=False)
-            response.raise_for_status()
-            return response.json().get("history_list", [])
-        except Exception as e:
-            st.error(f"Error when retrieving history: {e}")
-            return None
-
-    if st.session_state.token:
-        if st.button("Load history", key="load_history_button"):
-            history = load_user_history()
-            if history:
-                for entry in history:
-                    st.markdown("----")
-                    st.write(f"**Prediction:** {entry['trash_prediction'].title()}")
-                    st.write(f"**Date:** {entry['created_at']}")
-
-                    img_url = entry.get("photo_link")
-                    if img_url and img_url != "upload failed":
-                        try:
-                            img_bytes = requests.get(img_url, verify=False).content
-                            img = Image.open(io.BytesIO(img_bytes))
-                            st.image(img, width=200)
-                        except:
-                            st.warning("Could not load image.")
-                    else:
-                        st.warning("Image missing.")
-            else:
-                st.info("No history yet.")
-    else:
-        st.info("Log in to see history.")
-
 st.title("Waste Prediction App")
 
-uploaded_file = st.file_uploader("Choose a photo", type=["jpg", "jpeg", "png", "bmp"])
+main_col, hist_col = st.columns([4, 2])
 
-if uploaded_file:
-    image = Image.open(uploaded_file)
-    st.session_state.image = image
-    st.image(image, caption="Selected image", width=420)
+with hist_col:
+    if st.session_state.token:
+        st.subheader("Your last predictions")
 
-if st.button("Analyze photo"):
-    if not st.session_state.image:
-        st.error("Please upload a photo first!")
-    elif not st.session_state.token:
-        st.error("Please log in first!")
-    else:
         try:
-            img_bytes = io.BytesIO()
-            st.session_state.image.save(img_bytes, format="PNG")
-            img_bytes.seek(0)
-            files = {"img": ("image.png", img_bytes, "image/png")}
             headers = {"Authorization": f"Bearer {st.session_state.token}"}
-            response = requests.post(PREDICT_URL, files=files, headers=headers, verify=False)
-            response.raise_for_status()
-            answer = response.json()
-            preds = answer.get("all_predictions", [])
+            hist_response = requests.post(f"{API_BASE}/user_history", headers=headers, verify=False)
+            hist_response.raise_for_status()
 
-            if preds:
-                if preds[0] == 'not trash':
-                    st.success("Not trash")
-                else:
-                    st.success(f"Top prediction: {preds[0].title()}")
-                    # === MAPOWANIE – dokładnie te same teksty co miałeś ===
-                    disposal_texts = {
-                        "cardboard": "Blue bin - paper and cardboard",
-                        "paper":     "Blue bin - paper and cardboard",
-                        "glass":     "Green bin - glass",
-                        "metal":     "Yellow bin - plastic and metal waste",
-                        "plastic":   "Yellow bin - plastic and metal waste",
-                        "organic":   "Brown bin - biodegradable waste",
-                        "e-waste":   "Special collection point for electronic waste",
-                        "textiles":  "Textile container or textile collection point",
-                        "medical":   "Special collection point for medical waste",
-                        "wood":      "Bulk waste or wood recycling point",
-                    }
-                    text = disposal_texts.get(preds[0], "Check local waste disposal rules")
-                    st_bin(text, waste_type=preds[0])
+            history = hist_response.json().get("history_list", [])
 
+            if len(history) == 0:
+                st.info("No history yet.")
             else:
-                st.warning("No predictions returned.")
+                for item in history:
+                    with st.container(border=True):
+                        st.write(f"**Prediction:** {item['trash_prediction']}")
+                        st.write(f"**Date:** {item['created_at']}")
+                        if item["photo_link"] != "upload failed":
+                            st.image(item["photo_link"], width=140)
+                        else:
+                            st.write("Image upload failed.")
+
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Could not load history: {e}")
+
+
+with main_col:
+
+    uploaded_file = st.file_uploader("Choose a photo", type=["jpg", "jpeg", "png", "bmp"])
+
+    if uploaded_file:
+        image = Image.open(uploaded_file)
+        st.session_state.image = image
+        st.image(image, caption="Selected image", width=420)
+
+    if st.button("Analyze photo"):
+        if not st.session_state.image:
+            st.error("Please upload a photo first!")
+        elif not st.session_state.token:
+            st.error("Please log in first!")
+        else:
+            try:
+                img_bytes = io.BytesIO()
+                st.session_state.image.save(img_bytes, format="PNG")
+                img_bytes.seek(0)
+                files = {"img": ("image.png", img_bytes, "image/png")}
+                headers = {"Authorization": f"Bearer {st.session_state.token}"}
+                response = requests.post(PREDICT_URL, files=files, headers=headers, verify=False)
+                response.raise_for_status()
+                answer = response.json()
+                preds = answer.get("all_predictions", [])
+
+                if preds:
+                    if preds[0] == 'not trash':
+                        st.success("Not trash")
+                    else:
+                        st.success(f"Top prediction: {preds[0].title()}")
+                        # === MAPOWANIE – dokładnie te same teksty co miałeś ===
+                        disposal_texts = {
+                            "cardboard": "Blue bin - paper and cardboard",
+                            "paper":     "Blue bin - paper and cardboard",
+                            "glass":     "Green bin - glass",
+                            "metal":     "Yellow bin - plastic and metal waste",
+                            "plastic":   "Yellow bin - plastic and metal waste",
+                            "organic":   "Brown bin - biodegradable waste",
+                            "e-waste":   "Special collection point for electronic waste",
+                            "textiles":  "Textile container or textile collection point",
+                            "medical":   "Special collection point for medical waste",
+                            "wood":      "Bulk waste or wood recycling point",
+                        }
+                        text = disposal_texts.get(preds[0], "Check local waste disposal rules")
+                        st_bin(text, waste_type=preds[0])
+
+                else:
+                    st.warning("No predictions returned.")
+            except Exception as e:
+                st.error(f"Error: {e}")
