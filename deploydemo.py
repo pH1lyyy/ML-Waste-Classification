@@ -11,7 +11,6 @@ LOGIN_URL = f"{API_BASE}/token"
 REGISTER_URL = f"{API_BASE}/register"
 PREDICT_URL = f"{API_BASE}/predict_all"
 
-# === INICJALIZACJA SESSION STATE ===
 for key, default in {
     "token": None, "user": None, "image": None,
     "clear_inputs": False, "login_message": "", "register_message": ""
@@ -26,9 +25,7 @@ if st.session_state.clear_inputs:
     st.session_state.reg_password = ""
     st.session_state.clear_inputs = False
 
-# === FUNKCJA CUSTOMOWA st_bin – DODAJ JĄ RAZ ===
 def st_bin(message: str, waste_type: str = "unknown"):
-    """Piękny komunikat z kolorem polskiego kosza"""
     color_map = {
         "cardboard": "#3498db",  # niebieski – papier
         "paper":     "#3498db",
@@ -65,9 +62,7 @@ def st_bin(message: str, waste_type: str = "unknown"):
         </div>
     </div>
     """, unsafe_allow_html=True)
-# ====================================================
 
-# === LOGOUT W PRAWYM GÓRNYM ROGU ===
 col1, col2 = st.columns([6, 1])
 with col2:
     if st.session_state.token:
@@ -79,7 +74,7 @@ with col2:
             st.session_state.login_message = "Logged out successfully!"
             st.rerun()
 
-# === SIDEBAR – LOGIN / REGISTER ===
+
 tab1, tab2 = st.sidebar.tabs(["Login", "Register"])
 
 with tab1:
@@ -144,7 +139,7 @@ with tab2:
                 st.session_state.register_message = f"Error: {e}"
                 st.rerun()
 
-# === GŁÓWNA APLIKACJA ===
+
 st.title("Waste Prediction App")
 
 uploaded_file = st.file_uploader("Choose a photo", type=["jpg", "jpeg", "png", "bmp"])
@@ -190,7 +185,7 @@ if st.button("Analyze photo"):
                         "wood":      "Bulk waste or wood recycling point",
                     }
                     text = disposal_texts.get(preds[0], "Check local waste disposal rules")
-                    st_bin(text, waste_type=preds[0])  # ← tutaj używamy nowej funkcji!
+                    st_bin(text, waste_type=preds[0])
 
             else:
                 st.warning("No predictions returned.")
