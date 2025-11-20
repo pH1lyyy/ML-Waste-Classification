@@ -3,7 +3,6 @@ import requests
 from PIL import Image
 import urllib3
 import io
-import json
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -151,20 +150,23 @@ with hist_col:
 
         try:
             headers = {"Authorization": f"Bearer {st.session_state.token}"}
-            hist_response = requests.post(f"{API_BASE}/user_history", headers=headers, verify=False)
+            hist_response = requests.post(
+                f"{API_BASE}/user_history",
+                headers=headers,
+                verify=False
+            )
             hist_response.raise_for_status()
 
             history = hist_response.json().get("history_list", [])
 
-            if len(history) == 0:
+            if not history:
                 st.info("No history yet.")
             else:
-                for raw_item in history:
-                    item = json.loads(raw_item)  # ← parsowanie JSON STRINGU
-
+                for item in history:
                     with st.container(border=True):
                         st.write(f"**Prediction:** {item['trash_prediction']}")
                         st.write(f"**Date:** {item['created_at']}")
+
                         if item["photo_link"] != "upload failed":
                             st.image(item["photo_link"], width=140)
                         else:
