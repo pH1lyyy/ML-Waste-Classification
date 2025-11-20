@@ -90,7 +90,7 @@ with tab2:
 
 
     if st.session_state.register_message:
-        if "successful" in st.session_state.register_message.lower():
+        if "created" in st.session_state.register_message.lower():
             st.success(st.session_state.register_message)
         else:
             st.error(st.session_state.register_message)
