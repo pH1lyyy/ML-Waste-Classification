@@ -25,6 +25,8 @@ for key, default in {
 if st.session_state.clear_inputs:
     st.session_state.username = ""
     st.session_state.password = ""
+    st.session_state.reg_username = ""
+    st.session_state.reg_password = ""
     st.session_state.clear_inputs = False
 
 
@@ -40,24 +42,23 @@ with col2:
             st.rerun()
 
 
-tab = st.sidebar.radio("Choose", ["Login", "Register"])
+tab1, tab2 = st.sidebar.tabs(["Login", "Register"])
 
-if tab == "Login":
-    st.sidebar.header("Login")
-    username = st.sidebar.text_input("Username", key="username")
-    password = st.sidebar.text_input("Password", type="password", key="password")
+with tab1:
+    st.header("Login")
+    username = st.text_input("Username", key="username")
+    password = st.text_input("Password", type="password", key="password")
 
     if st.session_state.login_message:
         if "successful" in st.session_state.login_message.lower():
-            st.sidebar.success(st.session_state.login_message)
+            st.success(st.session_state.login_message)
         else:
-            st.sidebar.error(st.session_state.login_message)
+            st.error(st.session_state.login_message)
 
-    if st.sidebar.button("Login"):
+    if st.button("Login"):
         if not username or not password:
             st.session_state.login_message = "Enter username and password!"
             st.rerun()
-
         try:
             response = requests.post(
                 LOGIN_URL,
@@ -65,7 +66,6 @@ if tab == "Login":
                 verify=False,
             )
             response.raise_for_status()
-
             st.session_state.token = response.json()["access_token"]
             st.session_state.user = username
             st.session_state.clear_inputs = True
@@ -75,14 +75,14 @@ if tab == "Login":
             st.session_state.login_message = "Login error — wrong credentials?"
             st.rerun()
 
-elif tab == "Register":
-    st.sidebar.header("Register")
-    reg_username = st.sidebar.text_input("New username", key="reg_username")
-    reg_password = st.sidebar.text_input("New password", type="password", key="reg_password")
+with tab2:
+    st.header("Register")
+    reg_username = st.text_input("New username", key="reg_username")
+    reg_password = st.text_input("New password", type="password", key="reg_password")
 
-    if st.sidebar.button("Create Account"):
+    if st.button("Create Account"):
         if not reg_username or not reg_password:
-            st.sidebar.error("Enter username and password!")
+            st.error("Enter username and password!")
         else:
             try:
                 response = requests.post(
@@ -91,12 +91,15 @@ elif tab == "Register":
                     verify=False
                 )
                 if response.status_code == 200:
-                    st.sidebar.success("Account created! You can now log in.")
+                    st.success("Account created! You can now log in.")
+                    # Clear input fields
+                    st.session_state.reg_username = ""
+                    st.session_state.reg_password = ""
                 else:
                     detail = response.json().get("detail", "Registration failed")
-                    st.sidebar.error(detail)
+                    st.error(detail)
             except Exception as e:
-                st.sidebar.error(f"Error: {e}")
+                st.error(f"Error: {e}")
 
 
 st.title("Waste Prediction App")
