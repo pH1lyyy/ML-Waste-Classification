@@ -202,7 +202,7 @@ with main_col:
                         st.success("Not trash")
                     else:
                         st.success(f"Top prediction: {preds[0].title()}")
-                        # === MAPOWANIE – dokładnie te same teksty co miałeś ===
+
                         disposal_texts = {
                             "cardboard": "Blue bin - paper and cardboard",
                             "paper":     "Blue bin - paper and cardboard",
