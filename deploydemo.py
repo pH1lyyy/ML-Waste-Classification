@@ -92,9 +92,7 @@ with tab2:
                 )
                 if response.status_code == 200:
                     st.success("Account created! You can now log in.")
-                    # Clear input fields
-                    st.session_state.reg_username = ""
-                    st.session_state.reg_password = ""
+                    st.session_state.clear_inputs = True
                 else:
                     detail = response.json().get("detail", "Registration failed")
                     st.error(detail)
