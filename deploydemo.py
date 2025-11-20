@@ -77,6 +77,12 @@ with tab1:
 
 with tab2:
     st.header("Register")
+
+    if st.session_state.get("clear_register_inputs", False):
+        st.session_state.reg_username = ""
+        st.session_state.reg_password = ""
+        st.session_state.clear_register_inputs = False
+
     reg_username = st.text_input("New username", key="reg_username")
     reg_password = st.text_input("New password", type="password", key="reg_password")
 
@@ -92,12 +98,13 @@ with tab2:
                 )
                 if response.status_code == 200:
                     st.success("Account created! You can now log in.")
-                    st.session_state.clear_inputs = True
+                    st.session_state.clear_register_inputs = True
                 else:
                     detail = response.json().get("detail", "Registration failed")
                     st.error(detail)
             except Exception as e:
                 st.error(f"Error: {e}")
+
 
 
 st.title("Waste Prediction App")
