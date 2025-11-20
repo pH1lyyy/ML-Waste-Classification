@@ -37,7 +37,7 @@ with col2:
             st.session_state.token = None
             st.session_state.user = None
             st.session_state.clear_inputs = True
-            st.rerun()
+            # st.rerun()
 
 
 st.sidebar.header("Login")
@@ -60,9 +60,9 @@ if st.sidebar.button("Login"):
             st.session_state.token = response.json()["access_token"]
             st.session_state.user = username
 
-            st.session_state.clear_inputs = True  # mark for clearing
+            st.session_state.clear_inputs = True
             st.sidebar.success("Login successful!")
-            st.rerun()
+            # st.rerun()
 
         except Exception as e:
             st.sidebar.error(f"Login error: {e}")
