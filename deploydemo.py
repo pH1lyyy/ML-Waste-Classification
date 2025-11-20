@@ -10,7 +10,7 @@ API_BASE = "https://waste-prediction-api-production.up.railway.app"
 LOGIN_URL = f"{API_BASE}/token"
 PREDICT_URL = f"{API_BASE}/predict_all"
 
-# --- SESSION VARIABLES ---
+
 if "token" not in st.session_state:
     st.session_state.token = None
 if "user" not in st.session_state:
@@ -20,7 +20,7 @@ if "image" not in st.session_state:
 if "clear_inputs" not in st.session_state:
     st.session_state.clear_inputs = False
 if "login_message" not in st.session_state:
-    st.session_state.login_message = None
+    st.session_state.login_message = ""
 
 
 if st.session_state.clear_inputs:
@@ -39,11 +39,16 @@ with col2:
             st.session_state.token = None
             st.session_state.user = None
             st.session_state.clear_inputs = True
-            st.session_state.login_message = None   # reset komunikatu
+            st.session_state.login_message = "Logged out successfully!"
             st.rerun()
 
 
 st.sidebar.header("Login")
+
+if st.session_state.login_message:
+    st.sidebar.success(st.session_state.login_message)
+    st.session_state.login_message = ""
+
 
 username = st.sidebar.text_input("Username", key="username")
 password = st.sidebar.text_input("Password", type="password", key="password")
@@ -74,15 +79,15 @@ if st.sidebar.button("Login"):
 
         st.session_state.clear_inputs = True
         st.session_state.login_message = "Login successful!"
-
         st.rerun()
+
 
     except Exception:
         st.session_state.login_message = "Login error — wrong credentials?"
         st.rerun()
 
 
-st.title("Waste Prediction - Demo")
+st.title("Waste Prediction App")
 
 uploaded_file = st.file_uploader("Choose a photo", type=["jpg", "jpeg", "png", "bmp"])
 
