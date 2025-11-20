@@ -99,9 +99,11 @@ with tab2:
                 if response.status_code == 200:
                     st.success("Account created! You can now log in.")
                     st.session_state.clear_register_inputs = True
+                    st.rerun()
                 else:
                     detail = response.json().get("detail", "Registration failed")
                     st.error(detail)
+                    st.rerun()
             except Exception as e:
                 st.error(f"Error: {e}")
 
