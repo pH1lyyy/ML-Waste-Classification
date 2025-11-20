@@ -24,15 +24,20 @@ col1, col2 = st.columns([6, 1])
 with col2:
     if st.session_state.token:
         st.write(f"Logged as: {st.session_state.user}")
+
         if st.button("Logout"):
             st.session_state.token = None
             st.session_state.user = None
+            st.session_state.username_input = ""   # clear inputs
+            st.session_state.password_input = ""
             st.success("Logged out!")
+            st.rerun()
 
 
 st.sidebar.header("Login")
-username = st.sidebar.text_input("Username")
-password = st.sidebar.text_input("Password", type="password")
+
+username = st.sidebar.text_input("Username", key="username_input")
+password = st.sidebar.text_input("Password", type="password", key="password_input")
 
 if st.sidebar.button("Login"):
     if not username or not password:
@@ -47,9 +52,15 @@ if st.sidebar.button("Login"):
             response.raise_for_status()
 
             st.session_state.token = response.json()["access_token"]
-            st.session_state.user = username  # <--- ZAPISUJEMY ZALOGOWANEGO USERA
+            st.session_state.user = username
+
+            # CLEAR INPUTS
+            st.session_state.username_input = ""
+            st.session_state.password_input = ""
 
             st.sidebar.success("Login successful!")
+            st.rerun()
+
         except Exception as e:
             st.sidebar.error(f"Login error: {e}")
 
