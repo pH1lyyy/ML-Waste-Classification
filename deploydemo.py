@@ -13,9 +13,21 @@ PREDICT_URL = f"{API_BASE}/predict_all"
 
 if "token" not in st.session_state:
     st.session_state.token = None
+if "user" not in st.session_state:
+    st.session_state.user = None
 if "image" not in st.session_state:
     st.session_state.image = None
 
+
+col1, col2 = st.columns([6, 1])
+
+with col2:
+    if st.session_state.token:
+        st.write(f"Logged as: {st.session_state.user}")
+        if st.button("Logout"):
+            st.session_state.token = None
+            st.session_state.user = None
+            st.success("Logged out!")
 
 
 st.sidebar.header("Login")
@@ -33,11 +45,13 @@ if st.sidebar.button("Login"):
                 verify=False,
             )
             response.raise_for_status()
+
             st.session_state.token = response.json()["access_token"]
+            st.session_state.user = username  # <--- ZAPISUJEMY ZALOGOWANEGO USERA
+
             st.sidebar.success("Login successful!")
         except Exception as e:
             st.sidebar.error(f"Login error: {e}")
-
 
 
 st.title("Waste Prediction - Demo")
@@ -48,7 +62,6 @@ if uploaded_file:
     image = Image.open(uploaded_file)
     st.session_state.image = image
     st.image(image, caption="Selected image", width=420)
-
 
 if st.button("Analyze photo"):
     if not st.session_state.image:
@@ -63,11 +76,13 @@ if st.button("Analyze photo"):
 
             files = {"img": ("image.png", img_bytes, "image/png")}
             headers = {"Authorization": f"Bearer {st.session_state.token}"}
+
             response = requests.post(PREDICT_URL, files=files, headers=headers, verify=False)
             response.raise_for_status()
-            answer = response.json()
 
+            answer = response.json()
             preds = answer.get("all_predictions", [])
+
             if preds:
                 st.success(f"Top prediction: {preds[0]}")
                 st.info(f"All predictions: {', '.join(preds)}")
