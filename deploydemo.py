@@ -151,6 +151,23 @@ if st.button("Analyze photo"):
             if preds:
                 st.success(f"Top prediction: {preds[0]}")
                 st.info(f"All predictions: {', '.join(preds)}")
+                if (preds[0] == 'cardboard' or preds[0] == 'paper'):
+                    suggestion = 'Blue bin - paper and cardboard'
+                if (preds[0] == 'glass'):
+                    suggestion = 'Green bin - glass'
+                if (preds[0] == 'metal' or preds[0] == 'plastic'):
+                    sugestion = 'Yellow bin - plastic and metal waste'
+                if (preds[0] == 'organic'):
+                    sugestion = 'Brown bin - biodegradable waste'
+                if (preds[0] == 'e-waste'):
+                    sugestion = 'Special collection point for electronic waste'
+                if (preds[0] == 'textiles'):
+                    suggestion = 'Textile container or textile collection point'
+                if (preds[0] == 'medical'):
+                    sugestion = 'Special collection point for medical waste'
+                if (preds[0] == 'wood'):
+                    sugestion = 'Bulk waste or wood recycling point'
+                st.info(f"Suggested method of disposal - {suggestion}")
             else:
                 st.warning("No predictions returned.")
 
