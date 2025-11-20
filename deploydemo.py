@@ -11,14 +11,10 @@ LOGIN_URL = f"{API_BASE}/token"
 REGISTER_URL = f"{API_BASE}/register"
 PREDICT_URL = f"{API_BASE}/predict_all"
 
-
+# === INICJALIZACJA SESSION STATE ===
 for key, default in {
-    "token": None,
-    "user": None,
-    "image": None,
-    "clear_inputs": False,
-    "login_message": "",
-    "register_message": "",
+    "token": None, "user": None, "image": None,
+    "clear_inputs": False, "login_message": "", "register_message": ""
 }.items():
     if key not in st.session_state:
         st.session_state[key] = default
@@ -30,7 +26,48 @@ if st.session_state.clear_inputs:
     st.session_state.reg_password = ""
     st.session_state.clear_inputs = False
 
+# === FUNKCJA CUSTOMOWA st_bin – DODAJ JĄ RAZ ===
+def st_bin(message: str, waste_type: str = "unknown"):
+    """Piękny komunikat z kolorem polskiego kosza"""
+    color_map = {
+        "cardboard": "#3498db",  # niebieski – papier
+        "paper":     "#3498db",
+        "glass":     "#27ae60",  # zielony – szkło
+        "metal":     "#f1c40f",  # żółty – metale/plastik
+        "plastic":   "#f1c40f",
+        "organic":   "#8B4513",  # brązowy – bio
+        "e-waste":   "#2c3e50",  # ciemny – elektrośmieci
+        "textiles":  "#9b59b6",  # fioletowy – tekstylia
+        "medical":   "#e74c3c",  # czerwony – medyczne
+        "wood":      "#d35400",  # pomarańczowy – drewno
+    }
+    bg_color = color_map.get(waste_type, "#636e72")  # domyślny szary
 
+    st.markdown(f"""
+    <div style="
+        padding: 18px 24px;
+        margin: 20px 0;
+        border-radius: 16px;
+        background: linear-gradient(135deg, {bg_color}22, {bg_color}44);
+        border-left: 8px solid {bg_color};
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    ">
+        <span style="font-size: 22px;">Recycle</span>
+        <div>
+            Suggested disposal method:<br>
+            {message}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+# ====================================================
+
+# === LOGOUT W PRAWYM GÓRNYM ROGU ===
 col1, col2 = st.columns([6, 1])
 with col2:
     if st.session_state.token:
@@ -42,14 +79,13 @@ with col2:
             st.session_state.login_message = "Logged out successfully!"
             st.rerun()
 
-
+# === SIDEBAR – LOGIN / REGISTER ===
 tab1, tab2 = st.sidebar.tabs(["Login", "Register"])
 
 with tab1:
     st.header("Login")
     username = st.text_input("Username", key="username")
     password = st.text_input("Password", type="password", key="password")
-
 
     if st.session_state.login_message:
         if "successful" in st.session_state.login_message.lower():
@@ -62,11 +98,7 @@ with tab1:
             st.session_state.login_message = "Enter username and password!"
             st.rerun()
         try:
-            response = requests.post(
-                LOGIN_URL,
-                data={"username": username, "password": password},
-                verify=False,
-            )
+            response = requests.post(LOGIN_URL, data={"username": username, "password": password}, verify=False)
             response.raise_for_status()
             st.session_state.token = response.json()["access_token"]
             st.session_state.user = username
@@ -79,7 +111,6 @@ with tab1:
 
 with tab2:
     st.header("Register")
-
     if st.session_state.get("clear_register_inputs", False):
         st.session_state.reg_username = ""
         st.session_state.reg_password = ""
@@ -87,8 +118,6 @@ with tab2:
 
     reg_username = st.text_input("New username", key="reg_username")
     reg_password = st.text_input("New password", type="password", key="reg_password")
-
-
 
     if st.session_state.register_message:
         if "created" in st.session_state.register_message.lower():
@@ -102,11 +131,7 @@ with tab2:
             st.rerun()
         else:
             try:
-                response = requests.post(
-                    REGISTER_URL,
-                    data={"username": reg_username, "password": reg_password},
-                    verify=False
-                )
+                response = requests.post(REGISTER_URL, data={"username": reg_username, "password": reg_password}, verify=False)
                 if response.status_code == 200:
                     st.session_state.register_message = "Account created! You can now log in."
                     st.session_state.clear_register_inputs = True
@@ -119,8 +144,9 @@ with tab2:
                 st.session_state.register_message = f"Error: {e}"
                 st.rerun()
 
-
+# === GŁÓWNA APLIKACJA ===
 st.title("Waste Prediction App")
+
 uploaded_file = st.file_uploader("Choose a photo", type=["jpg", "jpeg", "png", "bmp"])
 
 if uploaded_file:
@@ -138,38 +164,35 @@ if st.button("Analyze photo"):
             img_bytes = io.BytesIO()
             st.session_state.image.save(img_bytes, format="PNG")
             img_bytes.seek(0)
-
             files = {"img": ("image.png", img_bytes, "image/png")}
             headers = {"Authorization": f"Bearer {st.session_state.token}"}
-
             response = requests.post(PREDICT_URL, files=files, headers=headers, verify=False)
             response.raise_for_status()
-
             answer = response.json()
             preds = answer.get("all_predictions", [])
 
             if preds:
-                st.success(f"Top prediction: {preds[0]}")
-                st.info(f"All predictions: {', '.join(preds)}")
-                if (preds[0] == 'cardboard' or preds[0] == 'paper'):
-                    suggestion = 'Blue bin - paper and cardboard'
-                if (preds[0] == 'glass'):
-                    suggestion = 'Green bin - glass'
-                if (preds[0] == 'metal' or preds[0] == 'plastic'):
-                    sugestion = 'Yellow bin - plastic and metal waste'
-                if (preds[0] == 'organic'):
-                    sugestion = 'Brown bin - biodegradable waste'
-                if (preds[0] == 'e-waste'):
-                    sugestion = 'Special collection point for electronic waste'
-                if (preds[0] == 'textiles'):
-                    suggestion = 'Textile container or textile collection point'
-                if (preds[0] == 'medical'):
-                    sugestion = 'Special collection point for medical waste'
-                if (preds[0] == 'wood'):
-                    sugestion = 'Bulk waste or wood recycling point'
-                st.info(f"Suggested method of disposal - {suggestion}")
+                if preds[0] == 'not trash':
+                    st.success("Not trash")
+                else:
+                    st.success(f"Top prediction: {preds[0].title()}")
+                    # === MAPOWANIE – dokładnie te same teksty co miałeś ===
+                    disposal_texts = {
+                        "cardboard": "Blue bin - paper and cardboard",
+                        "paper":     "Blue bin - paper and cardboard",
+                        "glass":     "Green bin - glass",
+                        "metal":     "Yellow bin - plastic and metal waste",
+                        "plastic":   "Yellow bin - plastic and metal waste",
+                        "organic":   "Brown bin - biodegradable waste",
+                        "e-waste":   "Special collection point for electronic waste",
+                        "textiles":  "Textile container or textile collection point",
+                        "medical":   "Special collection point for medical waste",
+                        "wood":      "Bulk waste or wood recycling point",
+                    }
+                    text = disposal_texts.get(preds[0], "Check local waste disposal rules")
+                    st_bin(text, waste_type=preds[0])  # ← tutaj używamy nowej funkcji!
+
             else:
                 st.warning("No predictions returned.")
-
         except Exception as e:
             st.error(f"Error: {e}")
