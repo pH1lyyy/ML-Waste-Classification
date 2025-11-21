@@ -3,6 +3,8 @@ import requests
 from PIL import Image
 import urllib3
 import io
+from datetime import datetime
+st.set_page_config(layout="wide")
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -55,7 +57,7 @@ def st_bin(message: str, waste_type: str = "unknown"):
         align-items: center;
         gap: 14px;
     ">
-        <span style="font-size: 22px;">Recycle</span>
+        <span style="font-size: 20px;">{waste_type.upper()}</span>
         <div>
             Suggested disposal method:<br>
             {message}
@@ -66,13 +68,16 @@ def st_bin(message: str, waste_type: str = "unknown"):
 col1, col2 = st.columns([6, 1])
 with col2:
     if st.session_state.token:
-        st.write(f"Logged as: {st.session_state.user}")
-        if st.button("Logout"):
-            st.session_state.token = None
-            st.session_state.user = None
-            st.session_state.clear_inputs = True
-            st.session_state.login_message = "Logged out successfully!"
-            st.rerun()
+        left, right = st.columns([2, 2])
+        with left:
+            st.write(f"Logged as: {st.session_state.user}")
+        with right:
+            if st.button("Logout"):
+                st.session_state.token = None
+                st.session_state.user = None
+                st.session_state.clear_inputs = True
+                st.session_state.login_message = "Logged out successfully!"
+                st.rerun()
 
 
 tab1, tab2 = st.sidebar.tabs(["Login", "Register"])
@@ -142,7 +147,7 @@ with tab2:
 
 st.title("Waste Prediction App")
 
-main_col, hist_col = st.columns([4, 2])
+main_col,centre_space, hist_col = st.columns([5,1,5])
 
 with hist_col:
     if st.session_state.token:
@@ -164,13 +169,18 @@ with hist_col:
             else:
                 for item in history:
                     with st.container(border=True):
-                        st.write(f"**Prediction:** {item['trash_prediction']}")
-                        st.write(f"**Date:** {item['created_at']}")
-
-                        if item["photo_link"] != "upload failed":
-                            st.image(item["photo_link"], width=140)
-                        else:
-                            st.write("Image upload failed.")
+                        left, right = st.columns([2, 2])
+                        with left:
+                            st.write(f"**Prediction:** {item['trash_prediction']}")
+                            raw_date = item["created_at"]
+                            dt = datetime.fromisoformat(raw_date)
+                            pretty = dt.strftime("%Y-%m-%d %H:%M")
+                            st.write(f"**Date:** {pretty}")
+                        with right:
+                            if item["photo_link"] != "upload failed":
+                                st.image(item["photo_link"], width=140)
+                            else:
+                                st.write("Image upload failed.")
 
         except Exception as e:
             st.error(f"Could not load history: {e}")
@@ -203,9 +213,9 @@ with main_col:
 
                 if preds:
                     if preds[0] == 'not trash':
-                        st.success("Not trash")
+                        st.warning("Item not recognised as trash")
                     else:
-                        st.success(f"Top prediction: {preds[0].title()}")
+                        # st.success(f"Top prediction: {preds[0].title()}")
 
                         disposal_texts = {
                             "cardboard": "Blue bin - paper and cardboard",
