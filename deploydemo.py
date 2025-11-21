@@ -124,7 +124,7 @@ with tab2:
             st.success(st.session_state.register_message)
         else:
             st.error(st.session_state.register_message)
-
+    st.session_state.login_message = ""
     if st.button("Create Account"):
         if not reg_username or not reg_password:
             st.session_state.register_message = "Enter username and password!"
@@ -144,7 +144,7 @@ with tab2:
                 st.session_state.register_message = f"Error: {e}"
                 st.rerun()
 
-
+st.session_state.register_message = ""
 st.title("Waste Prediction App")
 
 main_col,centre_space, hist_col = st.columns([5,1,5])
